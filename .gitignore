@@ -1,0 +1,13 @@
+# config
+#server.ini
+
+# binaries/installers
+*.exe
+*.msi
+*.zip
+*.jar
+
+# runtime data
+world/
+backups/
+logs/

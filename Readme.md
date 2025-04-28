@@ -1,6 +1,11 @@
 # Minecraft Server OneClick Windows 10/11
 
-This README explains the role of each parameter in the `server.ini` file and provides an overview of the functions and scripts used to configure the Minecraft server (Vanilla or Forge).
+This script suite automates the complete setup and management of a Minecraft server (Vanilla or Forge) on Windows for a LAN experience.
+It installs, downloads the appropriate server files and Forge installer, and accepts the EULA.
+It generates a one-click launcher (run.bat), handles periodic or one-shot world backups (local) via RCON, and installs tools like 7-Zip CLI and mcrcon.
+All options are configured in server.ini, and simply double-clicking the batch file orchestrates the entire process with minimal user intervention.
+
+You can add mods and play with your friends by simply using Radmin VPN or ZeroTier to let the others easily join you.
 
 ## Usage
 
@@ -11,7 +16,11 @@ Getting your server up and running is very simple:
    It will prompt for administrator privileges (needed to extract and install components like 7-Zip, mcrcon, JDK/JRE, etc.), then handle the rest automatically.  
    You can still try without admin rights, but this scenario isn’t guaranteed to work.
 
+By default the server is allocated 4 GB of RAM. To increase this, edit `user_jvm_args.txt` (e.g. change `-Xmx4G` to `-Xmx6G`).
 ## File `server.ini`
+
+This section explains the role of each parameter in the `server.ini` file and provides an overview of the functions and scripts used to configure the Minecraft server (Vanilla or Forge).
+
 Contains the installation configuration:
 - **DESTINATION**  
   - Destination folder for downloading and installing the server (default: `.`).
