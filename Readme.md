@@ -1,4 +1,3 @@
-```markdown
 # Minecraft Server Setup Scripts
 
 This README explains the role of each parameter in the `server.ini` file and provides an overview of the functions and scripts used to configure the Minecraft server (Vanilla or Forge).
@@ -211,4 +210,3 @@ pause
 
 - Ensures all PowerShell scripts run with elevated privileges.  
 - Allows one double-click to configure and launch the server.
-```
