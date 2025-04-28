@@ -1,64 +1,65 @@
+```markdown
 # Minecraft Server Setup Scripts
 
-Questo README spiega la funzione di ciascun parametro nel file `server.ini` e offre una panoramica delle funzioni e script utilizzati per configurare il server Minecraft (Vanilla o Forge).
+This README explains the role of each parameter in the `server.ini` file and provides an overview of the functions and scripts used to configure the Minecraft server (Vanilla or Forge).
 
 ## File `server.ini`
-Contiene la configurazione dell’installazione:
-- **DESTINATION**
-  - Cartella di destinazione per il download e l’installazione del server (default: `.`).
-- **MINECRAFT_VERSION**
-  - Versione di Minecraft da utilizzare (es. `1.20.1`).
-- **VANILLA**
-  - Se `true`, installa il server Vanilla; altrimenti installerà Forge.
-- **FORGE_VERSION**
-  - Versione di Forge da installare o `Recommended` per la build consigliata.
-- **INSTALLER**
-  - Tipo di pacchetto Forge: `installer` o `universal`.
-- **JreVersion**, **JdkVersion**
-  - Versioni di JRE e JDK da installare (JRE 8, JDK 17).
-- **ForceInstall**
-  - Se `true`, forza il download e l’installazione anche se già presenti.
-- **Uninstall**
-  - Se `true`, disinstalla Java e pulisce la cartella server, poi esce.
+Contains the installation configuration:
+- **DESTINATION**  
+  - Destination folder for downloading and installing the server (default: `.`).
+- **MINECRAFT_VERSION**  
+  - Minecraft version to use (e.g. `1.20.1`).
+- **VANILLA**  
+  - If `true`, installs the Vanilla server; otherwise, installs Forge.
+- **FORGE_VERSION**  
+  - Forge version to install or `Recommended` for the recommended build.
+- **INSTALLER**  
+  - Forge package type: `installer` or `universal`.
+- **JreVersion**, **JdkVersion**  
+  - Versions of JRE and JDK to install (JRE 8, JDK 17).
+- **ForceInstall**  
+  - If `true`, forces download and installation even if already present.
+- **Uninstall**  
+  - If `true`, uninstalls Java and cleans the server folder, then exits.
 
-## Panoramica degli script
+## Script Overview
 
 ### `setup_java.ps1`
-- Installa (o disinstalla) Oracle JRE 8 e OpenJDK 17.
-- Legge parametri `JreVersion`, `JdkVersion`, `ForceInstall`, `Uninstall`.
-- Funzioni:
-  - `Uninstall-Java`: rimuove JRE/JDK e pulisce variabili di ambiente.
-  - `Download-IfNeeded`: scarica silent installer/MSI.
+- Installs (or uninstalls) Oracle JRE 8 and OpenJDK 17.  
+- Reads parameters `JreVersion`, `JdkVersion`, `ForceInstall`, and `Uninstall`.  
+- Functions:  
+  - `Uninstall-Java`: removes JRE/JDK and cleans environment variables.  
+  - `Download-IfNeeded`: silently downloads installer/MSI if required.
 
 ### `install_server.ps1`
-- Importa `setup_java.ps1`.
-- Rileva percorso di `java.exe` del JDK 17 e imposta `$javaCmd`.
-- Legge parametri da `server.ini`.
-- Flussi:
-  - **Uninstall**: disinstalla Java e pulisce cartelle.
-  - **Vanilla** (`VANILLA=true`):
-    1. Scarica `minecraft_server.<version>.jar` se assente.
-    2. Configura `eula.txt` (`eula=true`).
-    3. Esegue `Install-7ZipCLI` e `Install-Mcrcon`.
-    4. Genera `run.bat` con `Generate-RunBat -VanillaSwitch $true`.
-    5. Avvia il server.
-  - **Forge** (`VANILLA=false`):
-    1. Scarica o utilizza installer Forge.
-    2. Esegue installer Forge.
-    3. Configura `eula.txt`.
-    4. Esegue `Install-7ZipCLI` e `Install-Mcrcon`.
-    5. Genera `run.bat` con `Generate-RunBat -VanillaSwitch $false`.
-    6. Avvia il server.
+- Imports `setup_java.ps1`.  
+- Detects the path to `java.exe` in JDK 17 and sets `$javaCmd`.  
+- Reads parameters from `server.ini`.  
+- Flows:  
+  - **Uninstall**: uninstalls Java and cleans folders.  
+  - **Vanilla** (`VANILLA=true`):  
+    1. Downloads `minecraft_server.<version>.jar` if missing.  
+    2. Configures `eula.txt` (`eula=true`).  
+    3. Runs `Install-7ZipCLI` and `Install-Mcrcon`.  
+    4. Generates `run.bat` via `Generate-RunBat -VanillaSwitch $true`.  
+    5. Starts the server.  
+  - **Forge** (`VANILLA=false`):  
+    1. Downloads or uses the Forge installer.  
+    2. Runs the Forge installer.  
+    3. Configures `eula.txt`.  
+    4. Runs `Install-7ZipCLI` and `Install-Mcrcon`.  
+    5. Generates `run.bat` via `Generate-RunBat -VanillaSwitch $false`.  
+    6. Starts the server.
 
-### Funzioni ausiliarie
-- `Generate-RunBat`: genera `run.bat` per Vanilla/Forge includendo il comando Java corretto e script di backup.
-- `Install-7ZipCLI`: installa localmente 7-Zip CLI.
-- `Install-Mcrcon`: installa `mcrcon.exe` per la gestione remota.
+### Auxiliary Functions
+- `Generate-RunBat`: creates `run.bat` for Vanilla or Forge, including the correct Java command and backup script.  
+- `Install-7ZipCLI`: installs the local 7-Zip CLI.  
+- `Install-Mcrcon`: installs `mcrcon.exe` for remote management.
 
-## Script di backup
+## Backup Script
 
 ### `backup_world.ps1`
-Script per eseguire il backup della cartella `world`:
+Script to back up the `world` folder:
 
 ```powershell
 param(
@@ -67,26 +68,26 @@ param(
     [string]$BackupDir = "$PSScriptRoot\backups"
 )
 
-# 1. Posizionamento nella cartella dello script
+# 1. Change to the script directory
 Set-Location $PSScriptRoot
 
-# 2. Creazione della cartella di backup se mancante
+# 2. Create the backup folder if it doesn't exist
 if (-not (Test-Path $BackupDir)) {
     New-Item -ItemType Directory -Path $BackupDir | Out-Null
 }
 
-# 3. Generazione del timestamp (YYYY-MM-DD_HH-mm-ss)
+# 3. Generate timestamp (YYYY-MM-DD_HH-mm-ss)
 $timestamp = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
 
-# 4. Percorso 7z.exe e file di archivio
+# 4. Set paths for 7z.exe and the archive file
 $SevenZipExe = Join-Path $PSScriptRoot '7z.exe'
 $archive     = Join-Path $BackupDir "world_backup_$timestamp.7z"
 
-# 5. Esecuzione backup con 7-Zip (esclude session.lock, level.dat, level.dat_old)
+# 5. Run 7-Zip backup (excluding session.lock, level.dat, level.dat_old)
 $exclusions = @('-xr!*.lock','-xr!level.dat','-xr!level.dat_old')
 & $SevenZipExe a -t7z -mx=3 -ssw @exclusions $archive "$WorldDir\*"
 
-# 6. Rimozione di backup più vecchi mantenendo gli ultimi 6
+# 6. Remove older backups, keeping only the latest 6
 $limit = 6
 $files = Get-ChildItem -Path $BackupDir -Filter 'world_backup_*.7z' | Sort-Object LastWriteTime -Descending
 if ($files.Count -gt $limit) {
@@ -94,77 +95,74 @@ if ($files.Count -gt $limit) {
 }
 ```
 
-- **ServerDir**: radice del server (default script).
-- **WorldDir**: directory del mondo di gioco.
-- **BackupDir**: cartella dove salvare gli archivi.
-- Usa 7-Zip per creare un archivio `.7z` con compressione media e opzione `-ssw` (includi file aperti).
-- Esclude file di lock e dati di livello temporanei.
-- Pulisce automaticamente i backup più vecchi mantenendo solo gli ultimi 6.
+- **ServerDir**: root of the server (defaults to script location).  
+- **WorldDir**: game world directory.  
+- **BackupDir**: folder to save archives.  
+- Uses 7-Zip to create a `.7z` archive with medium compression and `-ssw` (include open files).  
+- Excludes lock and temporary level files.  
+- Automatically rotates backups, keeping the last 6.
 
----
+**Recommended Use:**
+1. Run `backup_world.ps1` before stopping the server to save the world state.  
+2. The script handles automatic rotation to prevent accumulation.  
+3. You can integrate calls to `backup_world.ps1` into your startup scripts or scheduled tasks.
 
-**Utilizzo consigliato:**
-1. Prima di arrestare il server, eseguire `backup_world.ps1` per salvare lo stato del mondo.
-2. Lo script gestisce rotazione automatica, evitando accumulo eccessivo.
-3. Puoi integrare chiamate a `backup_world.ps1` nei tuoi script di avvio o task schedulati.
-
-
-## Script di backup periodico
+## Periodic Backup Script
 
 ### `backup_period_world.ps1`
-Script per eseguire backup automatici a intervalli regolari tramite RCON:
+Script for automatic backups at regular intervals via RCON:
 
 ```powershell
 param(
-    [int]   $IntervalMinutes = 30,          # Intervallo tra backup in minuti
-    [int]   $StartupDelay    = 60,         # Delay iniziale in secondi per avviare il server
-    [string]$RconHost        = '127.0.0.1', # Host RCON (default locale)
-    [int]   $RconPort        = 25575,      # Porta RCON
-    [string]$RconPass        = 'minecraft1' # Password RCON
+    [int]   $IntervalMinutes = 30,          # Interval between backups in minutes
+    [int]   $StartupDelay    = 60,          # Initial delay in seconds for server startup
+    [string]$RconHost        = '127.0.0.1',  # Default RCON host
+    [int]   $RconPort        = 25575,       # RCON port
+    [string]$RconPass        = 'minecraft1' # RCON password
 )
 
-# Imposto la directory di lavoro
+# Set the working directory
 Set-Location $PSScriptRoot
 
-# Delay iniziale per assicurarsi che il server sia in esecuzione
-Write-Host "[Backup Periodico] Attendo $StartupDelay secondi per l'avvio del server..."
+# Initial delay to ensure the server is running
+Write-Host "[Periodic Backup] Waiting $StartupDelay seconds for server startup..."
 Start-Sleep -Seconds $StartupDelay
 
-# Polling RCON per verificare disponibilità
-Write-Host "[Backup Periodico] Controllo che RCON sia operativo..."
+# Poll RCON until ready
+Write-Host "[Periodic Backup] Checking if RCON is ready..."
 for ($i = 0; $i -lt 12; $i++) {
     $out = & "$PSScriptRoot\mcrcon.exe" -H $RconHost -P $RconPort -p $RconPass -c "list" 2>$null
     if ($out -match 'There are \d+ of a max') {
-        Write-Host "[Backup Periodico] RCON pronto dopo $($i * 5) secondi."
+        Write-Host "[Periodic Backup] RCON ready after $($i * 5) seconds."
         break
     }
     Start-Sleep -Seconds 5
 }
 
-# Funzione per verificare processo Java
+# Function to check if Java process is running
 function ServerRunning {
     Get-Process java -ErrorAction SilentlyContinue
 }
 
-Write-Host "[Backup Periodico] Avvio backup ogni $IntervalMinutes minuti."
+Write-Host "[Periodic Backup] Starting backups every $IntervalMinutes minutes."
 
 while (ServerRunning) {
-    # Disabilito e forzo salvataggio del mondo
+    # Disable and force-save the world
     & "$PSScriptRoot\mcrcon.exe" -H $RconHost -P $RconPort -p $RconPass -c "save-off" | Out-Null
     & "$PSScriptRoot\mcrcon.exe" -H $RconHost -P $RconPort -p $RconPass -c "save-all" | Out-Null
-    Write-Host "[Backup Periodico] save-off/save-all inviati a $(Get-Date -Format 'HH:mm:ss')."
+    Write-Host "[Periodic Backup] save-off/save-all sent at $(Get-Date -Format 'HH:mm:ss')."
 
-    # Eseguo backup del mondo
-    Write-Host "[Backup Periodico] Eseguo backup_world.ps1 a $(Get-Date -Format 'HH:mm:ss')"
+    # Run world backup
+    Write-Host "[Periodic Backup] Running backup_world.ps1 at $(Get-Date -Format 'HH:mm:ss')"
     & "$PSScriptRoot\backup_world.ps1"
 
-    # Riabilito i salvataggi
+    # Re-enable saving
     & "$PSScriptRoot\mcrcon.exe" -H $RconHost -P $RconPort -p $RconPass -c "save-on" | Out-Null
-    Write-Host "[Backup Periodico] save-on inviato a $(Get-Date -Format 'HH:mm:ss')."
+    Write-Host "[Periodic Backup] save-on sent at $(Get-Date -Format 'HH:mm:ss')."
 
-    # Attendo intervallo, controllando il server ogni 10 secondi
+    # Wait for the interval, checking the server every 10 seconds
     $waitTime = $IntervalMinutes * 60
-    Write-Host "[Backup Periodico] In attesa di $IntervalMinutes minuti..."
+    Write-Host "[Periodic Backup] Waiting $IntervalMinutes minutes..."
     while ($waitTime -gt 0) {
         Start-Sleep -Seconds 10
         $waitTime -= 10
@@ -172,46 +170,45 @@ while (ServerRunning) {
     }
 }
 
-Write-Host "[Backup Periodico] Nessun processo Java rilevato. Terminato a $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')."
+Write-Host "[Periodic Backup] No Java process detected. Exiting at $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')."
 ```
 
-- **IntervalMinutes**: intervallo tra backup, in minuti.
-- **StartupDelay**: pausa iniziale per assicurare che il server sia pronto.
-- **RconHost**, **RconPort**, **RconPass**: configurazione RCON per inviare comandi al server.
-- Utilizza `mcrcon.exe` per disabilitare/abilitare salvataggi e garantire backup coerenti.
-- Esegue `backup_world.ps1` ad ogni intervallo fino a che il processo Java è attivo.
+- **IntervalMinutes**: interval between backups in minutes.  
+- **StartupDelay**: initial pause to ensure server readiness.  
+- **RconHost**, **RconPort**, **RconPass**: RCON settings for sending commands.  
+- Uses `mcrcon.exe` to disable/enable saves for a consistent backup, then runs `backup_world.ps1` until the Java process stops.
 
-## Script di avvio in un click
+## One-Click Startup Script
 
 ### `one_click_server_manager_RUNME.bat`
-Batch file per:
-1. Elevare a privilegi di amministratore se necessario.
-2. Eseguire in sequenza:
-   - `setup_java.ps1` per preparazione Java.
-   - `install_server.ps1` per installazione/configurazione server Vanilla o Forge.
-3. Mantenere la finestra aperta con `pause`.
+Batch file to:
+1. Elevate to administrator privileges if needed.  
+2. Execute in sequence:  
+   - `setup_java.ps1` to prepare Java.  
+   - `install_server.ps1` to install/configure Vanilla or Forge server.  
+3. Keep the window open with `pause`.
 
 ```batch
 @echo off
-:: Richiede privilegi admin se assenti
+:: Require admin privileges if absent
 net session >nul 2>&1
 if %errorlevel% neq 0 (
-    echo Richiedo privilegi di amministratore...
+    echo Requesting administrator privileges...
     powershell -Command "Start-Process -FilePath '%~f0' -Verb runAs"
     exit /b
 )
 
 cd /d "%~dp0"
 
-echo Verifica setup Java...
+echo Verifying Java setup...
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\setup_java.ps1"
 
-echo Avvio installazione server Minecraft...
+echo Starting Minecraft server installation...
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\install_server.ps1"
 
 pause
 ```
 
-- Garantisce che tutti gli script PowerShell vengano eseguiti con privilegi elevati.
-- Consente un unico doppio click per configurare e avviare il server.
-
+- Ensures all PowerShell scripts run with elevated privileges.  
+- Allows one double-click to configure and launch the server.
+```

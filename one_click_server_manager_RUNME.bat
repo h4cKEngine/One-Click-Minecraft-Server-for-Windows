@@ -1,19 +1,19 @@
 @echo off
-:: Verifica se siamo già in una console con privilegi admin
+:: Check if we're already in an admin-privileged console
 net session >nul 2>&1
 if %errorlevel% neq 0 (
-    echo Richiedo privilegi di amministratore...
+    echo Requesting administrator privileges...
     powershell -Command "Start-Process -FilePath '%~f0' -Verb runAs"
     exit /b
 )
 
-:: Da qui in poi si usa una shell elevata
+:: From here on, use an elevated shell
 cd /d "%~dp0"
 
-echo Verifica setup Java...
+echo Verifying Java setup...
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\setup_java.ps1"
 
-echo Avvio installazione server Minecraft...
+echo Starting Minecraft server installation...
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\install_server.ps1"
 
 pause
