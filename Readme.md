@@ -1,6 +1,15 @@
-# Minecraft Server Setup Scripts
+# Minecraft Server OneClick Windows 10/11
 
 This README explains the role of each parameter in the `server.ini` file and provides an overview of the functions and scripts used to configure the Minecraft server (Vanilla or Forge).
+
+## Usage
+
+Getting your server up and running is very simple:
+
+1. Edit `server.ini` to set any parameters you want (or just leave everything at its defaults).
+2. Double-click **one_click_server_manager_RUNME.bat** (Yeah double-click).  
+   It will prompt for administrator privileges (needed to extract and install components like 7-Zip, mcrcon, JDK/JRE, etc.), then handle the rest automatically.  
+   You can still try without admin rights, but this scenario isn’t guaranteed to work.
 
 ## File `server.ini`
 Contains the installation configuration:

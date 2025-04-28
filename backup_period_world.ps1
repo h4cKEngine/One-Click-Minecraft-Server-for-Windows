@@ -7,7 +7,7 @@
     [string]$RconPass        = 'minecraft1'
 )
 
-# Imposto la directory di lavoro
+# Set working directory
 Set-Location $PSScriptRoot
 
 function Perform-WorldBackup {
@@ -18,103 +18,102 @@ function Perform-WorldBackup {
         [int] $KeepLatest = 6
     )
 
-    # 1. Creo la cartella di backup se non esiste
+    # 1. Create the backup folder if it doesn't exist
     if (-not (Test-Path $BackupDir)) {
         New-Item -ItemType Directory -Path $BackupDir | Out-Null
     }
 
-    # 2. Genero il timestamp
-    $timestamp  = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
-    $archive    = Join-Path $BackupDir "world_backup_$timestamp.7z"
-    $SevenZipExe= Join-Path $PSScriptRoot '7z.exe'
+    # 2. Generate the timestamp
+    $timestamp   = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
+    $archive     = Join-Path $BackupDir "world_backup_$timestamp.7z"
+    $SevenZipExe = Join-Path $PSScriptRoot '7z.exe'
 
-    # 3. Definisco esclusioni
+    # 3. Define exclusions
     $exclusions = @(
         '-xr!*.lock',
         '-xr!level.dat',
         '-xr!level.dat_old'
     )
 
-    Write-Host "Avvio backup di '$WorldDir' → '$archive' ..." -ForegroundColor Cyan
+    Write-Host "Starting backup of '$WorldDir' → '$archive' ..." -ForegroundColor Cyan
     & $SevenZipExe a -t7z -mx=3 -ssw @exclusions $archive "$WorldDir\*"
-    Write-Host "Backup completato: $archive" -ForegroundColor Green
+    Write-Host "Backup completed: $archive" -ForegroundColor Green
 
-    # 4. Rimuovo i backup più vecchi mantenendo solo gli ultimi $KeepLatest
+    # 4. Remove older backups, keeping only the latest $KeepLatest
     $files = Get-ChildItem -Path $BackupDir -Filter 'world_backup_*.7z' |
              Sort-Object LastWriteTime -Descending
     if ($files.Count -gt $KeepLatest) {
         $files | Select-Object -Skip $KeepLatest | ForEach-Object {
             Remove-Item $_.FullName -Force
-            Write-Host "Rimosso backup vecchio: $($_.Name)" -ForegroundColor Yellow
+            Write-Host "Removed old backup: $($_.Name)" -ForegroundColor Yellow
         }
     }
 
     $count = (Get-ChildItem -Path $BackupDir -Filter 'world_backup_*.7z').Count
-    Write-Host "Backup totali presenti: $count" -ForegroundColor Cyan
+    Write-Host "Total backups present: $count" -ForegroundColor Cyan
 }
 
-# Se lancio con -OneShot, eseguo una sola volta il backup e esco
+# If launched with -OneShot, perform a single backup and exit
 if ($OneShot) {
     Perform-WorldBackup -WorldDir "$PSScriptRoot\world" -BackupDir "$PSScriptRoot\backups" -KeepLatest 6
     exit 0
 }
 
-# Delay iniziale per avviare il server
-Write-Host "[Backup Periodico] Attendo $StartupDelay secondi per l'avvio del server..."
+# Initial delay to allow the server to start
+Write-Host "[Periodic Backup] Waiting $StartupDelay seconds for server startup..."
 Start-Sleep -Seconds $StartupDelay
 
-# Polling RCON fino a risposta
-Write-Host "[Backup Periodico] Controllo che RCON sia operativo..."
+# Poll RCON until it's responsive
+Write-Host "[Periodic Backup] Checking if RCON is operational..."
 for ($i = 0; $i -lt 12; $i++) {
     $out = & "$PSScriptRoot\mcrcon.exe" -H $RconHost -P $RconPort -p $RconPass -c "list" 2>$null
     if ($out -match 'There are \d+ of a max') {
-        Write-Host "[Backup Periodico] RCON pronto dopo $($i * 5) secondi."
+        Write-Host "[Periodic Backup] RCON ready after $($i * 5) seconds."
         break
     }
     Start-Sleep -Seconds 5
 }
 
-# Funzione di rilevamento del server (qualsiasi java)
+# Function to detect if any Java process (i.e., the server) is running
 function ServerRunning {
     Get-Process java -ErrorAction SilentlyContinue
 }
 
-Write-Host "[Backup Periodico] Avvio backup ogni $IntervalMinutes minuti."
+Write-Host "[Periodic Backup] Starting backups every $IntervalMinutes minutes."
 
-# Loop principale: ripeti finchè il server è attivo
+# Main loop: repeat as long as the server is running
 while (ServerRunning) {
-    # 1) Disabilito e forzo salvataggio
+    # 1) Disable world saves and force a save
     & "$PSScriptRoot\mcrcon.exe" -H $RconHost -P $RconPort -p $RconPass -c "save-off" | Out-Null
     & "$PSScriptRoot\mcrcon.exe" -H $RconHost -P $RconPort -p $RconPass -c "save-all" | Out-Null
-    Write-Host "[Backup Periodico] save-off/save-all inviati alle $(Get-Date -Format 'HH:mm:ss')."
+    Write-Host "[Periodic Backup] save-off/save-all sent at $(Get-Date -Format 'HH:mm:ss')."
 
-    # 2) Eseguo il backup principale con la funzione Perform-WorldBackup
+    # 2) Perform main backup using the Perform-WorldBackup function
     $worldDir  = Join-Path $PSScriptRoot 'world'
     $backupDir = Join-Path $PSScriptRoot 'backups'
-    Write-Host "[Backup Periodico] Eseguo Perform-WorldBackup alle $(Get-Date -Format 'HH:mm:ss')" -ForegroundColor Cyan
+    Write-Host "[Periodic Backup] Running Perform-WorldBackup at $(Get-Date -Format 'HH:mm:ss')" -ForegroundColor Cyan
     Perform-WorldBackup -WorldDir  $worldDir `
                         -BackupDir  $backupDir `
                         -KeepLatest 6
 
-    # 3) Riabilito i salvataggi
+    # 3) Re-enable world saves
     & "$PSScriptRoot\mcrcon.exe" -H $RconHost -P $RconPort -p $RconPass -c "save-on" | Out-Null
-    Write-Host "[Backup Periodico] save-on inviato alle $(Get-Date -Format 'HH:mm:ss')."
+    Write-Host "[Periodic Backup] save-on sent at $(Get-Date -Format 'HH:mm:ss')."
 
-    # 4) Attendo intervallo controllando server ogni 1 secondo per exit rapido
+    # 4) Wait for the next interval, checking server status periodically
     $waitTime = $IntervalMinutes * 60
-    Write-Host "[Backup Periodico] In attesa di $IntervalMinutes minuti (controllo server ogni 1s)..."
-
+    Write-Host "[Periodic Backup] Waiting $IntervalMinutes minutes (checking server every few seconds)..."
     while ($waitTime -gt 0 -and (ServerRunning)) {
         Start-Sleep -Seconds 3
         $waitTime -= 1
     }
 
-    # Se siamo usciti perché il server non gira più:
+    # If the server has stopped, break the loop immediately
     if (-not (ServerRunning)) {
-        Write-Host "[Backup Periodico] Server fermato: esco immediatamente dal loop." -ForegroundColor Yellow
+        Write-Host "[Periodic Backup] Server stopped: exiting loop immediately." -ForegroundColor Yellow
     }
 }
 
-Write-Host "[Backup Periodico] Nessun processo Java rilevato. Script terminato alle $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')."
+Write-Host "[Periodic Backup] No Java process detected. Script ended at $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')."
 Start-Sleep -Seconds 3
 exit 0
