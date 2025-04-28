@@ -7,7 +7,8 @@ Parameters from server.ini:
 #>
 
 param(
-    [string]$ConfigFile = "server.ini"
+    [string]$ConfigFile = "server.ini",
+    [switch]$UninstallSwitch
 )
 
 # —— Detecting JDK 17 in default install paths ——
@@ -86,7 +87,7 @@ Write-Host "Using this java to start the server: $javaCmd" -ForegroundColor Gree
 # Obtain Uninstall flag
 [bool]$Uninstall = if ($cfg.ContainsKey('Uninstall')) { $cfg['Uninstall'] -match '^(true|1)$' } else { $false }
 # If Uninstall=true, clean server folders and then uninstall JDK
-if ($Uninstall) {
+if ($Uninstall -or $UninstallSwitch) {
     Write-Host "Uninstall flag enabled: cleaning server files and uninstalling JDK..." -ForegroundColor Cyan
 
     # Clean server files/folders
